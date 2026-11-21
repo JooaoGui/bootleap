@@ -1,8 +1,5 @@
 package io.github.jooaogui.bootleap.rule;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.jooaogui.bootleap.scan.ScannedProject;
+import io.github.jooaogui.bootleap.scan.TextFiles;
 
 /**
  * The Spring Boot 4 Gradle plugin needs Gradle 8.14 or later (or 9.x).
@@ -37,7 +35,7 @@ public final class GradleVersionRule implements Rule {
     }
 
     private Optional<Finding> check(ScannedProject project, Path file) {
-        List<String> lines = read(file);
+        List<String> lines = TextFiles.lines(file);
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             if (!line.trim().startsWith("distributionUrl")) {
@@ -61,13 +59,5 @@ public final class GradleVersionRule implements Rule {
                     "Run ./gradlew wrapper --gradle-version latest (anything from 8.14 up works) and commit the wrapper files."));
         }
         return Optional.empty();
-    }
-
-    private static List<String> read(Path file) {
-        try {
-            return Files.readAllLines(file);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }
