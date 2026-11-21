@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import io.github.jooaogui.bootleap.report.TextReport;
 import io.github.jooaogui.bootleap.rule.Finding;
 import io.github.jooaogui.bootleap.rule.GradleVersionRule;
+import io.github.jooaogui.bootleap.rule.Jackson3Rule;
 import io.github.jooaogui.bootleap.rule.Rule;
 import io.github.jooaogui.bootleap.scan.ProjectScanner;
 import io.github.jooaogui.bootleap.scan.ScannedProject;
@@ -29,7 +30,8 @@ import picocli.CommandLine.Parameters;
 public class BootleapCommand implements Callable<Integer> {
 
     static final List<Rule> RULES = List.of(
-            new GradleVersionRule());
+            new GradleVersionRule(),
+            new Jackson3Rule());
 
     @Parameters(index = "0", defaultValue = ".", description = "Project directory (default: current directory).")
     Path projectDir;
