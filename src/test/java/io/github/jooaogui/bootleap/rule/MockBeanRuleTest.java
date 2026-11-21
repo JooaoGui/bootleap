@@ -39,6 +39,22 @@ class MockBeanRuleTest {
     }
 
     @Test
+    void flagsTheRestOfTheRemovedPackage() throws IOException {
+        source("src/test/java/demo/AllMocksTest.java",
+                "package demo;",
+                "import org.springframework.boot.test.mock.mockito.MockBeans;",
+                "import org.springframework.boot.test.mock.mockito.MockReset;",
+                "import org.springframework.boot.test.mock.mockito.*;",
+                "import org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener;");
+
+        assertThat(check()).satisfiesExactly(
+                f -> assertThat(f.fix()).startsWith("Use @MockitoBeans"),
+                f -> assertThat(f.fix()).startsWith("Import org.springframework.test.context.bean.override.mockito.MockReset"),
+                f -> assertThat(f.problem()).contains("removed the whole org.springframework.boot.test.mock.mockito package"),
+                f -> assertThat(f.problem()).startsWith("Imports org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener"));
+    }
+
+    @Test
     void acceptsTheSpringFrameworkAnnotations() throws IOException {
         source("src/test/java/demo/OrderControllerTest.java",
                 "package demo;",
