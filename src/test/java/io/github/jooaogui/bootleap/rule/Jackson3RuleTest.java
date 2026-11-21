@@ -67,6 +67,25 @@ class Jackson3RuleTest {
         assertThat(check()).isEmpty();
     }
 
+    @Test
+    void flagsSpringBootJacksonClassesThatWereRenamed() throws IOException {
+        source("src/main/java/demo/JsonConfig.java",
+                "package demo;",
+                "",
+                "import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;",
+                "import org.springframework.boot.jackson.JsonComponent;");
+
+        assertThat(check()).satisfiesExactly(
+                f -> {
+                    assertThat(f.location()).isEqualTo("src/main/java/demo/JsonConfig.java:3");
+                    assertThat(f.problem()).startsWith("Jackson2ObjectMapperBuilderCustomizer was renamed to JsonMapperBuilderCustomizer");
+                },
+                f -> {
+                    assertThat(f.location()).isEqualTo("src/main/java/demo/JsonConfig.java:4");
+                    assertThat(f.fix()).startsWith("Use JacksonComponent instead");
+                });
+    }
+
     private List<Finding> check() {
         return new Jackson3Rule().check(new ProjectScanner().scan(root));
     }
