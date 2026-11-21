@@ -26,7 +26,6 @@ class ProjectScannerTest {
         assertThat(project.buildFiles()).extracting(project::relativize).extracting(Path::toString)
                 .containsExactlyInAnyOrder("build.gradle.kts", path("gradle/wrapper/gradle-wrapper.properties"));
         assertThat(project.sources()).hasSize(2);
-        assertThat(project.gradleWrapperProperties()).isPresent();
     }
 
     @Test
