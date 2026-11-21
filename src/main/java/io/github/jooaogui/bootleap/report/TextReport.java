@@ -17,11 +17,14 @@ public final class TextReport {
         }
         out.println(findings.size() + " thing(s) to fix before Spring Boot 4:");
         out.println();
+        String previousFix = null;
         for (Finding f : findings) {
             out.println("[" + f.ruleId() + "] " + f.location());
             out.println("  " + f.problem());
-            out.println("  Fix: " + f.fix());
+            // A rule that hits many files gives the same fix each time; print it once.
+            out.println("  Fix: " + (f.fix().equals(previousFix) ? "same as above." : f.fix()));
             out.println();
+            previousFix = f.fix();
         }
     }
 }
