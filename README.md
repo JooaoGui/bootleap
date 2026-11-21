@@ -34,6 +34,13 @@ Planned:
 
 Work in progress. Rules are being built from the official Spring Boot 4.0 migration guide and from comparing the class names inside the 3.5.x and 4.x jars.
 
+What it already checks:
+
+| Rule | What it finds |
+|---|---|
+| `gradle-version` | Gradle wrappers older than 8.14, which stop the build before anything compiles |
+| `jackson-3` | Jackson 2 imports (`com.fasterxml.jackson.*`, except annotations) and Spring Boot Jackson classes renamed in 4.0, like `Jackson2ObjectMapperBuilderCustomizer` |
+
 ## License
 
 Apache License 2.0
