@@ -9,10 +9,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.jooaogui.bootleap.scan.Dependency;
+import io.github.jooaogui.bootleap.scan.Import;
 import io.github.jooaogui.bootleap.scan.ScannedProject;
 
 /**
@@ -24,6 +26,8 @@ public final class TestcontainersRule implements Rule {
     static final String ID = "testcontainers-2";
 
     private static final String GROUP = "org.testcontainers";
+
+    private static final Set<String> JUNIT4_RULES = Set.of("org.junit.Rule", "org.junit.ClassRule");
 
     private final Set<String> renamedModules = load("testcontainers-renamed-modules.txt");
 
@@ -52,7 +56,27 @@ public final class TestcontainersRule implements Rule {
                 }
             }
         }
+        for (Path source : project.sources()) {
+            junit4Rule(project, source).ifPresent(findings::add);
+        }
         return findings;
+    }
+
+    /**
+     * In 1.x every container was a JUnit 4 rule (GenericContainer extended FailureDetectingExternalResource)
+     * and the core jar pulled in junit:junit. Both are gone in 2.x.
+     */
+    private static Optional<Finding> junit4Rule(ScannedProject project, Path source) {
+        List<Import> imports = Import.read(source);
+        boolean usesTestcontainers = imports.stream().anyMatch(i -> i.isIn("org.testcontainers"));
+        return imports.stream()
+                .filter(i -> usesTestcontainers && JUNIT4_RULES.contains(i.name()))
+                .findFirst()
+                .map(i -> new Finding(ID, project.relativize(source), i.line(),
+                        "Testcontainers 2 dropped JUnit 4 support: containers are no longer @Rule/@ClassRule objects "
+                                + "and junit:junit no longer comes with it.",
+                        "Move the test to JUnit 5 with @Testcontainers and @Container (testcontainers-junit-jupiter), "
+                                + "or call start() and stop() on the container yourself."));
     }
 
     private static Set<String> load(String resource) {

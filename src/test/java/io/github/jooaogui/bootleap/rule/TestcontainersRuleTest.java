@@ -58,6 +58,30 @@ class TestcontainersRuleTest {
         assertThat(check()).isEmpty();
     }
 
+    @Test
+    void flagsJUnit4RulesThatHoldContainers() throws IOException {
+        file("src/test/java/demo/RepositoryTest.java",
+                "package demo;",
+                "import org.junit.ClassRule;",
+                "import org.junit.Test;",
+                "import org.testcontainers.containers.PostgreSQLContainer;");
+
+        assertThat(check()).singleElement().satisfies(f -> {
+            assertThat(f.location()).isEqualTo("src/test/java/demo/RepositoryTest.java:2");
+            assertThat(f.problem()).startsWith("Testcontainers 2 dropped JUnit 4 support");
+        });
+    }
+
+    @Test
+    void ignoresJUnit4RulesInTestsWithoutContainers() throws IOException {
+        file("src/test/java/demo/OldTest.java",
+                "package demo;",
+                "import org.junit.Rule;",
+                "import org.junit.rules.TemporaryFolder;");
+
+        assertThat(check()).isEmpty();
+    }
+
     private List<Finding> check() {
         return new TestcontainersRule().check(new ProjectScanner().scan(root));
     }
