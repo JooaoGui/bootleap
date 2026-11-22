@@ -60,6 +60,23 @@ class BootleapCommandTest {
     }
 
     @Test
+    void skipsProjectsNotYetOnSpringBoot4WhenAsked() throws IOException {
+        oldGradleWrapper();
+        Files.writeString(dir.resolve("build.gradle"), "plugins { id 'org.springframework.boot' version '3.5.16' }");
+
+        assertThat(run(dir.toString(), "--only-if-upgrading")).isZero();
+        assertThat(run(dir.toString())).isEqualTo(1);
+    }
+
+    @Test
+    void checksProjectsThatAskForSpringBoot4() throws IOException {
+        oldGradleWrapper();
+        Files.writeString(dir.resolve("build.gradle"), "plugins { id 'org.springframework.boot' version '4.0.10' }");
+
+        assertThat(run(dir.toString(), "--only-if-upgrading")).isEqualTo(1);
+    }
+
+    @Test
     void returnsTwoForAnUnknownVersion() {
         assertThat(run(dir.toString(), "--to", "3.5")).isEqualTo(2);
         assertThat(run(dir.toString(), "--to", "latest")).isEqualTo(2);

@@ -70,6 +70,11 @@ public class BootleapCommand implements Callable<Integer> {
                     + "Markdown is made for pull request comments.")
     Format format;
 
+    @Option(names = "--only-if-upgrading",
+            description = "Only check when the build files already ask for Spring Boot 4, as on a Dependabot branch. "
+                    + "Otherwise print nothing and exit with 0. Ignored with --to.")
+    boolean onlyIfUpgrading;
+
     static List<Rule> rules(String target) {
         return List.of(
                 new GradleVersionRule(),
@@ -97,7 +102,14 @@ public class BootleapCommand implements Callable<Integer> {
             }
             choice = new Choice(version.group(1), "Checking against Spring Boot " + version.group(1) + ".");
         } else {
-            choice = choose(project, BootVersion.detect(project));
+            Optional<BootVersion> found = BootVersion.detect(project);
+            if (onlyIfUpgrading && found.map(v -> v.major() < 4).orElse(true)) {
+                // Nothing on stdout, so a script (like the GitHub Action) knows there is no report.
+                System.err.println("The build does not ask for Spring Boot 4 yet, so there is nothing to check. "
+                        + "Run without --only-if-upgrading to check anyway.");
+                return 0;
+            }
+            choice = choose(project, found);
         }
         List<Finding> findings = rules(choice.version()).stream()
                 .flatMap(rule -> rule.check(project).stream())
