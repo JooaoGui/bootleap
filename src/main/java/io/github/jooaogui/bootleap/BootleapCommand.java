@@ -34,7 +34,7 @@ import picocli.CommandLine.Parameters;
 @Command(
         name = "bootleap",
         mixinStandardHelpOptions = true,
-        version = "bootleap 0.1.0-SNAPSHOT",
+        versionProvider = BootleapCommand.ManifestVersion.class,
         description = "Lists what is likely to break when upgrading a project to Spring Boot 4.")
 public class BootleapCommand implements Callable<Integer> {
 
@@ -87,6 +87,15 @@ public class BootleapCommand implements Callable<Integer> {
                 .toList();
         new TextReport().print(findings, System.out);
         return findings.isEmpty() || reportOnly ? 0 : 1;
+    }
+
+    /** Reads the version that the build writes into the jar manifest, so it lives only in pom.xml. */
+    static final class ManifestVersion implements CommandLine.IVersionProvider {
+        @Override
+        public String[] getVersion() {
+            String version = BootleapCommand.class.getPackage().getImplementationVersion();
+            return new String[] {"bootleap " + (version != null ? version : "(development build)")};
+        }
     }
 
     /** The Spring Boot version to check against, and a line telling the user why. */
