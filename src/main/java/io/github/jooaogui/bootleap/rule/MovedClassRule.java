@@ -31,14 +31,23 @@ public final class MovedClassRule implements Rule {
     private static final Set<String> ALWAYS_PRESENT = Set.of(
             "spring-boot", "spring-boot-autoconfigure", "spring-boot-test", "spring-boot-test-autoconfigure");
 
+    /** Spring Boot versions with a generated table, oldest first. */
+    public static final List<String> TARGETS = List.of("4.0", "4.1", "4.2");
+
     record Move(String newClass, String artifact) {
     }
 
+    private final String target;
     private final Map<String, Move> moves;
     private final Map<String, List<Move>> movedFromPackage;
 
-    public MovedClassRule() {
-        this.moves = load("moved-classes-4.0.tsv");
+    /** @param target the Spring Boot version the project moves to, one of {@link #TARGETS} */
+    public MovedClassRule(String target) {
+        if (!TARGETS.contains(target)) {
+            throw new IllegalArgumentException("No table for Spring Boot " + target);
+        }
+        this.target = target;
+        this.moves = load("moved-classes-" + target + ".tsv");
         this.movedFromPackage = new TreeMap<>();
         new TreeMap<>(moves).forEach((oldClass, move) -> movedFromPackage
                 .computeIfAbsent(oldClass.substring(0, oldClass.lastIndexOf('.')), k -> new ArrayList<>())
@@ -90,14 +99,14 @@ public final class MovedClassRule implements Rule {
         return name;
     }
 
-    private static Finding wildcardFinding(ScannedProject project, Path source, Import i, String pkg, List<Move> moved) {
+    private Finding wildcardFinding(ScannedProject project, Path source, Import i, String pkg, List<Move> moved) {
         List<String> names = moved.stream().map(m -> simpleName(m.newClass())).toList();
         List<String> newClasses = moved.stream().map(Move::newClass).toList();
         return new Finding(
                 ID,
                 project.relativize(source),
                 i.line(),
-                String.join(", ", names) + " moved out of " + pkg + " in Spring Boot 4, "
+                String.join(", ", names) + " moved out of " + pkg + " in Spring Boot " + target + ", "
                         + "so this wildcard import no longer finds " + (moved.size() == 1 ? "it." : "them."),
                 "Import " + String.join(", ", newClasses) + ".");
     }
@@ -106,7 +115,7 @@ public final class MovedClassRule implements Rule {
         return className.substring(className.lastIndexOf('.') + 1);
     }
 
-    private static Finding finding(ScannedProject project, Path source, Import i, Move move) {
+    private Finding finding(ScannedProject project, Path source, Import i, Move move) {
         String simpleName = move.newClass().substring(move.newClass().lastIndexOf('.') + 1);
         String newPackage = move.newClass().substring(0, move.newClass().lastIndexOf('.'));
         String fix = "Import " + move.newClass() + " instead.";
@@ -118,7 +127,7 @@ public final class MovedClassRule implements Rule {
                 ID,
                 project.relativize(source),
                 i.line(),
-                simpleName + " moved to " + newPackage + " in Spring Boot 4, so this import no longer compiles.",
+                simpleName + " moved to " + newPackage + " in Spring Boot " + target + ", so this import no longer compiles.",
                 fix);
     }
 

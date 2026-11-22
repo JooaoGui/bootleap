@@ -17,6 +17,22 @@ class MovedClassRuleTest {
     @TempDir
     Path root;
 
+    String target = "4.0";
+
+    @Test
+    void usesTheTableOfTheTargetVersion() throws IOException {
+        source("src/main/java/demo/Health.java",
+                "package demo;",
+                "import org.springframework.boot.actuate.amqp.RabbitHealthIndicator;");
+
+        assertThat(check()).singleElement().extracting(Finding::fix).asString()
+                .startsWith("Import org.springframework.boot.amqp.health.RabbitHealthIndicator");
+
+        target = "4.2"; // spring-boot-amqp became spring-boot-rabbitmq in a later 4.x
+        assertThat(check()).singleElement().extracting(Finding::fix).asString()
+                .startsWith("Import org.springframework.boot.rabbitmq.health.RabbitHealthIndicator");
+    }
+
     @Test
     void flagsClassesThatMovedToANewModule() throws IOException {
         source("src/test/java/demo/OrderControllerTest.java",
@@ -28,7 +44,7 @@ class MovedClassRuleTest {
             assertThat(f.ruleId()).isEqualTo("moved-class");
             assertThat(f.location()).isEqualTo("src/test/java/demo/OrderControllerTest.java:3");
             assertThat(f.problem()).isEqualTo("WebMvcTest moved to org.springframework.boot.webmvc.test.autoconfigure "
-                    + "in Spring Boot 4, so this import no longer compiles.");
+                    + "in Spring Boot 4.0, so this import no longer compiles.");
             assertThat(f.fix()).startsWith("Import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest instead.")
                     .contains("spring-boot-webmvc-test module");
         });
@@ -81,7 +97,7 @@ class MovedClassRuleTest {
         assertThat(check()).singleElement().satisfies(f -> {
             assertThat(f.location()).endsWith(":2");
             assertThat(f.problem()).isEqualTo("AutoConfigureMockMvc, WebMvcTest moved out of "
-                    + "org.springframework.boot.test.autoconfigure.web.servlet in Spring Boot 4, "
+                    + "org.springframework.boot.test.autoconfigure.web.servlet in Spring Boot 4.0, "
                     + "so this wildcard import no longer finds them.");
             assertThat(f.fix()).isEqualTo("Import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc, "
                     + "org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest.");
@@ -114,7 +130,7 @@ class MovedClassRuleTest {
     }
 
     private List<Finding> check() {
-        return new MovedClassRule().check(new ProjectScanner().scan(root));
+        return new MovedClassRule(target).check(new ProjectScanner().scan(root));
     }
 
     private void source(String path, String... lines) throws IOException {

@@ -40,6 +40,18 @@ class BootleapCommandTest {
         assertThat(run(dir.resolve("missing").toString())).isEqualTo(2);
     }
 
+    @Test
+    void acceptsTheVersionToMoveTo() {
+        assertThat(run(dir.toString(), "--to", "4.0")).isZero();
+        assertThat(run(dir.toString(), "--to", "4.1.3")).isZero();
+    }
+
+    @Test
+    void returnsTwoForAnUnknownVersion() {
+        assertThat(run(dir.toString(), "--to", "3.5")).isEqualTo(2);
+        assertThat(run(dir.toString(), "--to", "latest")).isEqualTo(2);
+    }
+
     private static int run(String... args) {
         return new CommandLine(new BootleapCommand()).execute(args);
     }
