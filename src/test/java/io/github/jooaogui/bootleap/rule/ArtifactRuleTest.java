@@ -44,10 +44,16 @@ class ArtifactRuleTest {
                 "    implementation 'org.springframework.boot:spring-boot-starter-undertow'",
                 "}");
 
-        assertThat(check()).singleElement().satisfies(f -> {
-            assertThat(f.location()).isEqualTo("app/build.gradle:3");
-            assertThat(f.problem()).startsWith("Spring Boot 4 dropped Undertow");
-        });
+        assertThat(check()).satisfiesExactly(
+                f -> {
+                    assertThat(f.location()).isEqualTo("app/build.gradle:2");
+                    assertThat(f.problem()).startsWith("spring-boot-starter-web is deprecated in Spring Boot 4. It still works");
+                    assertThat(f.fix()).isEqualTo("Use org.springframework.boot:spring-boot-starter-webmvc instead.");
+                },
+                f -> {
+                    assertThat(f.location()).isEqualTo("app/build.gradle:3");
+                    assertThat(f.problem()).startsWith("Spring Boot 4 dropped Undertow");
+                });
     }
 
     @Test

@@ -21,17 +21,29 @@ public final class ArtifactRule implements Rule {
     record Change(String problem, String fix) {
     }
 
-    private static final Map<String, Change> CHANGES = Map.of(
-            "org.springframework.boot:spring-boot-starter-aop", new Change(
+    private static final Map<String, Change> CHANGES = Map.ofEntries(
+            Map.entry("org.springframework.boot:spring-boot-starter-aop", new Change(
                     "spring-boot-starter-aop was renamed to spring-boot-starter-aspectj in Spring Boot 4, "
                             + "so the old name no longer resolves.",
-                    "Use org.springframework.boot:spring-boot-starter-aspectj instead."),
-            "org.springframework.boot:spring-boot-starter-undertow", new Change(
+                    "Use org.springframework.boot:spring-boot-starter-aspectj instead.")),
+            Map.entry("org.springframework.boot:spring-boot-starter-undertow", new Change(
                     "Spring Boot 4 dropped Undertow, so this starter no longer exists.",
-                    "Remove it and use Tomcat (the default in the web starters) or spring-boot-starter-jetty."),
-            "org.springframework.boot:spring-boot-starter-pulsar-reactive", new Change(
+                    "Remove it and use Tomcat (the default in the web starters) or spring-boot-starter-jetty.")),
+            Map.entry("org.springframework.boot:spring-boot-starter-pulsar-reactive", new Change(
                     "Spring Boot 4 dropped its reactive Pulsar support, so this starter no longer exists.",
-                    "Use spring-boot-starter-pulsar, or manage the reactive Pulsar client yourself."));
+                    "Use spring-boot-starter-pulsar, or manage the reactive Pulsar client yourself.")),
+            // Still there in 4.x, but deprecated: their 4.0.10 poms name the replacement.
+            deprecated("spring-boot-starter-web", "spring-boot-starter-webmvc"),
+            deprecated("spring-boot-starter-web-services", "spring-boot-starter-webservices"),
+            deprecated("spring-boot-starter-oauth2-client", "spring-boot-starter-security-oauth2-client"),
+            deprecated("spring-boot-starter-oauth2-resource-server", "spring-boot-starter-security-oauth2-resource-server"),
+            deprecated("spring-boot-starter-oauth2-authorization-server", "spring-boot-starter-security-oauth2-authorization-server"));
+
+    private static Map.Entry<String, Change> deprecated(String starter, String replacement) {
+        return Map.entry("org.springframework.boot:" + starter, new Change(
+                starter + " is deprecated in Spring Boot 4. It still works for now, but will be removed in a later version.",
+                "Use org.springframework.boot:" + replacement + " instead."));
+    }
 
     @Override
     public String id() {
