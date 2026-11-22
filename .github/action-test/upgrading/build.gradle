@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
 }
