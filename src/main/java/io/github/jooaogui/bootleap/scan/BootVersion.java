@@ -32,6 +32,23 @@ public record BootVersion(String version, Path file, int line) {
     private static final Pattern MAVEN_PROPERTY = Pattern.compile("<([\\w.-]+)>\\s*([^<\\s]+)\\s*</\\1>");
     private static final Pattern MAVEN_REFERENCE = Pattern.compile("\\$\\{([\\w.-]+)}");
 
+    // Gradle: id 'org.springframework.boot' version '4.0.1' / id("org.springframework.boot") version "4.0.1",
+    // where the version can also be "${springBootVersion}" or a bare springBootVersion from gradle.properties.
+    private static final Pattern GRADLE_PLUGIN = Pattern.compile(
+            "org\\.springframework\\.boot[\"']\\s*\\)?\\s*version\\s*\\(?\\s*([\"'][^\"']+[\"']|[\\w.]+)");
+    // platform("org.springframework.boot:spring-boot-dependencies:4.0.1"), also inside version catalogs.
+    private static final Pattern GRADLE_BOM = Pattern.compile("org\\.springframework\\.boot:spring-boot-dependencies:([^\"'\\s)]+)");
+    private static final Pattern GRADLE_REFERENCE = Pattern.compile("\\$?\\{?([\\w.]+)}?");
+    private static final Pattern KEY_VALUE = Pattern.compile("^\\s*([\\w.-]+)\\s*[=:]\\s*[\"']?([^\"'\\s]+)[\"']?\\s*$");
+
+    // Version catalogs: { id = "org.springframework.boot", version.ref = "spring-boot" } or version = "4.0.1".
+    private static final Pattern CATALOG_REF = Pattern.compile("version\\.ref\\s*=\\s*\"([^\"]+)\"");
+    private static final Pattern CATALOG_VERSION = Pattern.compile("version\\s*=\\s*\"([^\"]+)\"");
+
+    /** A {@code key = value} found in gradle.properties or in the [versions] of a version catalog. */
+    record Property(String value, Path file, int line) {
+    }
+
     public int major() {
         return part(1);
     }
@@ -50,17 +67,102 @@ public record BootVersion(String version, Path file, int line) {
 
     /** The newest Spring Boot version found in any build file of the project. */
     public static Optional<BootVersion> detect(ScannedProject project) {
+        Map<String, Property> gradleProperties = new HashMap<>();
+        project.buildFiles().stream()
+                .filter(file -> file.getFileName().toString().equals("gradle.properties"))
+                .forEach(file -> gradleProperties.putAll(keyValues(file, TextFiles.lines(file))));
         return project.buildFiles().stream()
-                .flatMap(file -> read(file).stream())
+                .flatMap(file -> read(file, gradleProperties).stream())
                 .max(Comparator.comparingInt(BootVersion::major).thenComparingInt(BootVersion::minor));
     }
 
-    static List<BootVersion> read(Path file) {
+    static List<BootVersion> read(Path file, Map<String, Property> gradleProperties) {
         String name = file.getFileName().toString();
         if (name.equals("pom.xml")) {
             return readMaven(file);
         }
+        if (name.endsWith(".gradle") || name.endsWith(".gradle.kts")) {
+            return readGradle(file, gradleProperties);
+        }
+        if (name.endsWith(".toml")) {
+            return readCatalog(file);
+        }
         return List.of();
+    }
+
+    private static List<BootVersion> readGradle(Path file, Map<String, Property> gradleProperties) {
+        List<String> lines = TextFiles.lines(file);
+        List<BootVersion> versions = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).trim().startsWith("//")) {
+                continue;
+            }
+            for (Pattern pattern : List.of(GRADLE_PLUGIN, GRADLE_BOM)) {
+                Matcher m = pattern.matcher(lines.get(i));
+                if (!m.find()) {
+                    continue;
+                }
+                String token = m.group(1).replace("\"", "").replace("'", "");
+                Matcher reference = GRADLE_REFERENCE.matcher(token);
+                if (!NUMBER.matcher(token).matches() && reference.matches() && gradleProperties.containsKey(reference.group(1))) {
+                    Property p = gradleProperties.get(reference.group(1));
+                    add(versions, p.value(), p.file(), p.line());
+                } else {
+                    add(versions, token, file, i + 1);
+                }
+            }
+        }
+        return versions;
+    }
+
+    private static List<BootVersion> readCatalog(Path file) {
+        List<String> lines = TextFiles.lines(file);
+        Map<String, Property> catalogVersions = keyValues(file, sectionLines(lines, "versions"));
+        List<BootVersion> versions = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            Matcher bom = GRADLE_BOM.matcher(line);
+            if (bom.find()) {
+                add(versions, bom.group(1), file, i + 1);
+                continue;
+            }
+            if (!line.contains("\"org.springframework.boot\"") && !line.contains("\"org.springframework.boot:")) {
+                continue;
+            }
+            Matcher ref = CATALOG_REF.matcher(line);
+            Matcher literal = CATALOG_VERSION.matcher(line);
+            if (ref.find() && catalogVersions.containsKey(ref.group(1))) {
+                Property p = catalogVersions.get(ref.group(1));
+                add(versions, p.value(), file, p.line());
+            } else if (literal.find()) {
+                add(versions, literal.group(1), file, i + 1);
+            }
+        }
+        return versions;
+    }
+
+    /** The lines of one [section] of a TOML file; lines of other sections are blanked so line numbers stay right. */
+    private static List<String> sectionLines(List<String> lines, String section) {
+        List<String> result = new ArrayList<>();
+        boolean inside = false;
+        for (String line : lines) {
+            if (line.trim().startsWith("[")) {
+                inside = line.trim().equals("[" + section + "]");
+            }
+            result.add(inside ? line : "");
+        }
+        return result;
+    }
+
+    private static Map<String, Property> keyValues(Path file, List<String> lines) {
+        Map<String, Property> values = new HashMap<>();
+        for (int i = 0; i < lines.size(); i++) {
+            Matcher m = KEY_VALUE.matcher(lines.get(i));
+            if (m.matches()) {
+                values.put(m.group(1), new Property(m.group(2), file, i + 1));
+            }
+        }
+        return values;
     }
 
     private static List<BootVersion> readMaven(Path pom) {

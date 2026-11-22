@@ -22,7 +22,7 @@ public final class ProjectScanner {
 
     private static final Set<String> BUILD_FILES = Set.of(
             "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
-            "libs.versions.toml", "gradle-wrapper.properties");
+            "libs.versions.toml", "gradle.properties", "gradle-wrapper.properties");
 
     public ScannedProject scan(Path root) {
         List<Path> buildFiles = new ArrayList<>();

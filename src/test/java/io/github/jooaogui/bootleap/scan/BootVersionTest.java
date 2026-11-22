@@ -77,6 +77,66 @@ class BootVersionTest {
     }
 
     @Test
+    void readsTheGradlePluginInGroovyAndKotlin() throws IOException {
+        file("groovy/build.gradle",
+                "plugins {",
+                "    id 'org.springframework.boot' version '3.5.16'",
+                "}");
+        file("kotlin/build.gradle.kts",
+                "plugins {",
+                "    id(\"org.springframework.boot\") version \"4.0.10\"",
+                "}");
+
+        assertThat(detect()).hasValueSatisfying(v -> {
+            assertThat(v.version()).isEqualTo("4.0.10");
+            assertThat(v.file()).endsWith(Path.of("kotlin", "build.gradle.kts"));
+            assertThat(v.line()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void resolvesTheVersionFromGradleProperties() throws IOException {
+        file("gradle.properties",
+                "org.gradle.jvmargs=-Xmx2g",
+                "springBootVersion=4.2.0");
+        file("build.gradle",
+                "plugins {",
+                "    id 'org.springframework.boot' version \"${springBootVersion}\"",
+                "}");
+
+        assertThat(detect()).hasValueSatisfying(v -> {
+            assertThat(v.version()).isEqualTo("4.2.0");
+            assertThat(v.file()).endsWith(Path.of("gradle.properties"));
+            assertThat(v.line()).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void readsTheBomImportedWithPlatform() throws IOException {
+        file("build.gradle.kts",
+                "dependencies {",
+                "    implementation(platform(\"org.springframework.boot:spring-boot-dependencies:4.1.3\"))",
+                "}");
+
+        assertThat(detect()).map(BootVersion::version).hasValue("4.1.3");
+    }
+
+    @Test
+    void readsVersionCatalogs() throws IOException {
+        file("gradle/libs.versions.toml",
+                "[versions]",
+                "spring-boot = \"4.0.10\"",
+                "",
+                "[plugins]",
+                "spring-boot = { id = \"org.springframework.boot\", version.ref = \"spring-boot\" }");
+
+        assertThat(detect()).hasValueSatisfying(v -> {
+            assertThat(v.version()).isEqualTo("4.0.10");
+            assertThat(v.line()).isEqualTo(2);
+        });
+    }
+
+    @Test
     void picksTheNewestVersionInTheRepository() throws IOException {
         file("a/pom.xml", parent("3.5.16"));
         file("b/pom.xml", parent("4.0.10"));
