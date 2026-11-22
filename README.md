@@ -73,14 +73,14 @@ All of them can be found by reading the build files and the imports, which is wh
 ## How to use
 
 ```
-java -jar bootleap.jar [path] [--to VERSION] [--format text|markdown] [--report-only]
+java -jar bootleap.jar [path] [--to VERSION] [--format text|markdown|json] [--report-only]
 ```
 
 | Option | What it does |
 |---|---|
 | `path` | Project directory. Default: the current directory. Multi-module builds are scanned as a whole. |
 | `--to VERSION` | Spring Boot version you are moving to: `4.0`, `4.1` or `4.2`. Some classes moved again during 4.x, so the advice depends on it. Without it, bootleap reads the version from your build (Maven parent or BOM, Gradle plugin, `gradle.properties` or version catalog): on a Dependabot branch that is already the new 4.x version. If the build is still on 3.x, it checks against the newest one. |
-| `--format FORMAT` | `text` (default) or `markdown`. Markdown groups the findings by rule and is made for pull request comments. |
+| `--format FORMAT` | `text` (default), `markdown` or `json`. Markdown groups the findings by rule and is made for pull request comments. JSON is for scripts: `context`, `count` and a `findings` list with `rule`, `file`, `line`, `problem` and `fix` (`line` is 0 when the finding is about the whole file). |
 | `--report-only` | Always exit with 0, even when something is found. |
 
 Exit codes: `0` nothing found, `1` something found, `2` bad input. So it can fail a CI step on its own.
@@ -161,7 +161,7 @@ Found a false positive, or something that broke on your upgrade and bootleap mis
 - [x] Downloadable release
 - [x] GitHub Action that comments on the Dependabot PR that bumps Spring Boot to 4.x
 - [x] Markdown output
-- [ ] JSON output
+- [x] JSON output
 - [x] Read the target version from the build file, so `--to` is not needed
 
 ## Author
