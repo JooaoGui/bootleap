@@ -57,6 +57,24 @@ class ArtifactRuleTest {
     }
 
     @Test
+    void flagsTheOldHibernateMetamodelGenerator() throws IOException {
+        file("pom.xml",
+                "<project>",
+                "  <annotationProcessorPaths>",
+                "    <path>",
+                "      <groupId>org.hibernate.orm</groupId>",
+                "      <artifactId>hibernate-jpamodelgen</artifactId>",
+                "    </path>",
+                "  </annotationProcessorPaths>",
+                "</project>");
+
+        assertThat(check()).singleElement().satisfies(f -> {
+            assertThat(f.location()).isEqualTo("pom.xml:5");
+            assertThat(f.fix()).startsWith("Use org.hibernate.orm:hibernate-processor instead");
+        });
+    }
+
+    @Test
     void acceptsStartersThatStillExist() throws IOException {
         file("build.gradle.kts",
                 "dependencies {",

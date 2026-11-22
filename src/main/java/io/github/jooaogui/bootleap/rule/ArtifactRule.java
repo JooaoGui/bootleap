@@ -32,6 +32,11 @@ public final class ArtifactRule implements Rule {
             Map.entry("org.springframework.boot:spring-boot-starter-pulsar-reactive", new Change(
                     "Spring Boot 4 dropped its reactive Pulsar support, so this starter no longer exists.",
                     "Use spring-boot-starter-pulsar, or manage the reactive Pulsar client yourself.")),
+            // In Hibernate 7 this artifact is only a relocation pom, and the Boot 4 BOM manages the new name instead.
+            Map.entry("org.hibernate.orm:hibernate-jpamodelgen", new Change(
+                    "Hibernate renamed hibernate-jpamodelgen to hibernate-processor, and Spring Boot 4 only manages the new name. "
+                            + "Without a version the old one no longer resolves.",
+                    "Use org.hibernate.orm:hibernate-processor instead (also in annotationProcessorPaths).")),
             // Still there in 4.x, but deprecated: their 4.0.10 poms name the replacement.
             deprecated("spring-boot-starter-web", "spring-boot-starter-webmvc"),
             deprecated("spring-boot-starter-web-services", "spring-boot-starter-webservices"),
