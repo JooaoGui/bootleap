@@ -51,6 +51,15 @@ class BootleapCommandTest {
     }
 
     @Test
+    void acceptsTheOutputFormats() throws IOException {
+        oldGradleWrapper();
+
+        assertThat(run(dir.toString(), "--format", "markdown")).isEqualTo(1);
+        assertThat(run(dir.toString(), "--format", "text")).isEqualTo(1);
+        assertThat(run(dir.toString(), "--format", "html")).isEqualTo(2);
+    }
+
+    @Test
     void returnsTwoForAnUnknownVersion() {
         assertThat(run(dir.toString(), "--to", "3.5")).isEqualTo(2);
         assertThat(run(dir.toString(), "--to", "latest")).isEqualTo(2);

@@ -8,6 +8,8 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.github.jooaogui.bootleap.report.MarkdownReport;
+import io.github.jooaogui.bootleap.report.Report;
 import io.github.jooaogui.bootleap.report.TextReport;
 import io.github.jooaogui.bootleap.rule.ArtifactRule;
 import io.github.jooaogui.bootleap.rule.Finding;
@@ -51,6 +53,23 @@ public class BootleapCommand implements Callable<Integer> {
     @Option(names = "--report-only", description = "Always exit with code 0, even when something is found.")
     boolean reportOnly;
 
+    /** Output formats. The names are what users type after --format. */
+    enum Format {
+        text(new TextReport()),
+        markdown(new MarkdownReport());
+
+        final Report report;
+
+        Format(Report report) {
+            this.report = report;
+        }
+    }
+
+    @Option(names = "--format", paramLabel = "FORMAT", defaultValue = "text",
+            description = "Output format: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). "
+                    + "Markdown is made for pull request comments.")
+    Format format;
+
     static List<Rule> rules(String target) {
         return List.of(
                 new GradleVersionRule(),
@@ -83,7 +102,7 @@ public class BootleapCommand implements Callable<Integer> {
         List<Finding> findings = rules(choice.version()).stream()
                 .flatMap(rule -> rule.check(project).stream())
                 .toList();
-        new TextReport().print(choice.message(), findings, System.out);
+        format.report.print(choice.message(), findings, System.out);
         return findings.isEmpty() || reportOnly ? 0 : 1;
     }
 
