@@ -16,6 +16,7 @@ import io.github.jooaogui.bootleap.rule.MigrationStarterRule;
 import io.github.jooaogui.bootleap.rule.MockBeanRule;
 import io.github.jooaogui.bootleap.rule.MovedClassRule;
 import io.github.jooaogui.bootleap.rule.Rule;
+import io.github.jooaogui.bootleap.rule.TestcontainersRule;
 import io.github.jooaogui.bootleap.scan.ProjectScanner;
 import io.github.jooaogui.bootleap.scan.ScannedProject;
 import picocli.CommandLine;
@@ -52,6 +53,7 @@ public class BootleapCommand implements Callable<Integer> {
                 new GradleVersionRule(),
                 new ArtifactRule(),
                 new MigrationStarterRule(),
+                new TestcontainersRule(),
                 new Jackson3Rule(),
                 new MockBeanRule(),
                 new MovedClassRule(target));
