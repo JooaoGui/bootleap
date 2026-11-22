@@ -5,10 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import io.github.jooaogui.bootleap.scan.BootVersion;
+import io.github.jooaogui.bootleap.scan.ScannedProject;
 import picocli.CommandLine;
 
 class BootleapCommandTest {
@@ -50,6 +54,43 @@ class BootleapCommandTest {
     void returnsTwoForAnUnknownVersion() {
         assertThat(run(dir.toString(), "--to", "3.5")).isEqualTo(2);
         assertThat(run(dir.toString(), "--to", "latest")).isEqualTo(2);
+    }
+
+    @Test
+    void usesThe4xVersionOfTheBuild() {
+        var choice = BootleapCommand.choose(project(), found("4.0.10"));
+
+        assertThat(choice.version()).isEqualTo("4.0");
+        assertThat(choice.message()).isEqualTo("Checking against Spring Boot 4.0 (found 4.0.10 in pom.xml:5).");
+    }
+
+    @Test
+    void usesTheNewestVersionWhenTheBuildIsStillOn3x() {
+        var choice = BootleapCommand.choose(project(), found("3.5.16"));
+
+        assertThat(choice.version()).isEqualTo("4.2");
+        assertThat(choice.message()).startsWith("The build is on Spring Boot 3.5.16 in pom.xml:5, checking against Spring Boot 4.2.");
+    }
+
+    @Test
+    void usesTheNewestVersionForAVersionItDoesNotKnow() {
+        assertThat(BootleapCommand.choose(project(), found("4.9.0")).version()).isEqualTo("4.2");
+    }
+
+    @Test
+    void usesTheNewestVersionWhenNothingIsFound() {
+        var choice = BootleapCommand.choose(project(), Optional.empty());
+
+        assertThat(choice.version()).isEqualTo("4.2");
+        assertThat(choice.message()).startsWith("No Spring Boot version found");
+    }
+
+    private ScannedProject project() {
+        return new ScannedProject(dir, List.of(), List.of());
+    }
+
+    private Optional<BootVersion> found(String version) {
+        return Optional.of(new BootVersion(version, dir.resolve("pom.xml"), 5));
     }
 
     private static int run(String... args) {
