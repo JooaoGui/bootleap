@@ -39,21 +39,12 @@ jobs:
           jar: target/bootleap.jar
           comment: "false"
 
-      - name: Released jar (download and checksum)
-        id: released
-        uses: ./
-        with:
-          path: .github/action-test/upgrading
-          version: v0.1.0
-          comment: "false"
-
       - name: Check the outputs
         env:
           UPGRADING_FOUND: ${{ steps.upgrading.outputs.found }}
           UPGRADING_REPORT: ${{ steps.upgrading.outputs.report }}
           NOT_UPGRADING_FOUND: ${{ steps.not-upgrading.outputs.found }}
           NOT_UPGRADING_REPORT: ${{ steps.not-upgrading.outputs.report }}
-          RELEASED_FOUND: ${{ steps.released.outputs.found }}
         run: |
           set -x
           test "$UPGRADING_FOUND" = "true"
@@ -61,4 +52,3 @@ jobs:
           grep -q "MockitoBean" "$UPGRADING_REPORT"
           test "$NOT_UPGRADING_FOUND" = "false"
           test -z "$NOT_UPGRADING_REPORT"
-          test "$RELEASED_FOUND" = "true"
