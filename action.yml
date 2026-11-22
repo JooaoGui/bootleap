@@ -1,0 +1,130 @@
+name: bootleap - Spring Boot 4 upgrade check
+description: Comments on Spring Boot 4 upgrade pull requests (like the ones Dependabot opens) with everything that is likely to break.
+author: JooaoGui
+branding:
+  icon: alert-triangle
+  color: green
+
+inputs:
+  path:
+    description: Project directory to check.
+    default: "."
+  to:
+    description: Spring Boot version to check against (4.0, 4.1 or 4.2). Default is the 4.x version in the build files.
+    default: ""
+  only-if-upgrading:
+    description: Only check when the build files already ask for Spring Boot 4, as on a Dependabot branch. Keeps the action quiet on other pull requests.
+    default: "true"
+  comment:
+    description: Post the report as a pull request comment. bootleap keeps one comment and updates it on each run.
+    default: "true"
+  fail-on-findings:
+    description: Fail the step when something is found.
+    default: "false"
+  version:
+    description: bootleap release to use, like v0.2.0. Default is the version of this action, or the latest release.
+    default: ""
+  jar:
+    description: Path to a bootleap.jar to use instead of downloading a release.
+    default: ""
+  github-token:
+    description: Token used to download the release and to comment. The workflow needs pull-requests write permission to comment.
+    default: ${{ github.token }}
+
+outputs:
+  found:
+    description: "'true' when bootleap found something to fix."
+    value: ${{ steps.run.outputs.found }}
+  report:
+    description: Path to the Markdown report. Empty when the check was skipped.
+    value: ${{ steps.run.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get bootleap
+      id: jar
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        INPUT_JAR: ${{ inputs.jar }}
+        INPUT_VERSION: ${{ inputs.version }}
+        ACTION_REF: ${{ github.action_ref }}
+        ACTION_REPO: ${{ github.action_repository }}
+      run: |
+        if [ -n "$INPUT_JAR" ]; then
+          echo "path=$INPUT_JAR" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        tag="$INPUT_VERSION"
+        # uses: JooaoGui/bootleap@v0.2.0 -> download that same release.
+        if [ -z "$tag" ] && [[ "$ACTION_REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          tag="$ACTION_REF"
+        fi
+        dir="$RUNNER_TEMP/bootleap"
+        mkdir -p "$dir"
+        # With no tag, gh downloads the latest release.
+        gh release download $tag -R "${ACTION_REPO:-JooaoGui/bootleap}" -p 'bootleap.jar*' -D "$dir" --clobber
+        (cd "$dir" && sha256sum -c bootleap.jar.sha256)
+        echo "path=$dir/bootleap.jar" >> "$GITHUB_OUTPUT"
+
+    - name: Run bootleap
+      id: run
+      shell: bash
+      env:
+        JAR: ${{ steps.jar.outputs.path }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_TO: ${{ inputs.to }}
+        ONLY_IF_UPGRADING: ${{ inputs.only-if-upgrading }}
+      run: |
+        args=("$INPUT_PATH" --format markdown)
+        if [ -n "$INPUT_TO" ]; then args+=(--to "$INPUT_TO"); fi
+        if [ "$ONLY_IF_UPGRADING" = "true" ]; then args+=(--only-if-upgrading); fi
+        report="$RUNNER_TEMP/bootleap-report.md"
+        set +e
+        java -jar "$JAR" "${args[@]}" > "$report"
+        code=$?
+        set -e
+        case "$code" in
+          0) found=false ;;
+          1) found=true ;;
+          *) echo "::error::bootleap stopped with exit code $code"; exit "$code" ;;
+        esac
+        echo "found=$found" >> "$GITHUB_OUTPUT"
+        if [ -s "$report" ]; then
+          cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          echo "report=$report" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Comment on the pull request
+      if: inputs.comment == 'true' && steps.run.outputs.report != '' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        REPORT: ${{ steps.run.outputs.report }}
+        FOUND: ${{ steps.run.outputs.found }}
+      run: |
+        marker='<!-- bootleap -->'
+        existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+          -q ".[] | select(.body | startswith(\"$marker\")) | .id" | head -n 1)
+        # Stay quiet when all is fine, unless there is an old comment to mark as fixed.
+        if [ "$FOUND" != "true" ] && [ -z "$existing" ]; then
+          echo "Nothing found, no comment needed."
+          exit 0
+        fi
+        body="$marker"$'\n'"$(cat "$REPORT")"
+        hint="Could not comment. Give the workflow 'permissions: pull-requests: write'. The report is in the job summary."
+        if [ -n "$existing" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$existing" -f body="$body" > /dev/null || echo "::warning::$hint"
+        else
+          gh api "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null || echo "::warning::$hint"
+        fi
+
+    - name: Fail when something was found
+      if: inputs.fail-on-findings == 'true' && steps.run.outputs.found == 'true'
+      shell: bash
+      run: |
+        echo "::error::bootleap found things to fix before Spring Boot 4. See the job summary."
+        exit 1
