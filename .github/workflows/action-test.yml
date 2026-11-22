@@ -1,0 +1,64 @@
+name: Action test
+
+# Runs the action in this repository (uses: ./) against the small projects in .github/action-test.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Build the jar from this commit
+        run: ./mvnw -B -q package -DskipTests
+
+      - name: Project that asks for Spring Boot 4
+        id: upgrading
+        uses: ./
+        with:
+          path: .github/action-test/upgrading
+          jar: target/bootleap.jar
+          comment: "false"
+
+      - name: Project still on Spring Boot 3.5
+        id: not-upgrading
+        uses: ./
+        with:
+          path: .github/action-test/not-upgrading
+          jar: target/bootleap.jar
+          comment: "false"
+
+      - name: Released jar (download and checksum)
+        id: released
+        uses: ./
+        with:
+          path: .github/action-test/upgrading
+          version: v0.1.0
+          comment: "false"
+
+      - name: Check the outputs
+        env:
+          UPGRADING_FOUND: ${{ steps.upgrading.outputs.found }}
+          UPGRADING_REPORT: ${{ steps.upgrading.outputs.report }}
+          NOT_UPGRADING_FOUND: ${{ steps.not-upgrading.outputs.found }}
+          NOT_UPGRADING_REPORT: ${{ steps.not-upgrading.outputs.report }}
+          RELEASED_FOUND: ${{ steps.released.outputs.found }}
+        run: |
+          set -x
+          test "$UPGRADING_FOUND" = "true"
+          grep -q "testcontainers-postgresql" "$UPGRADING_REPORT"
+          grep -q "MockitoBean" "$UPGRADING_REPORT"
+          test "$NOT_UPGRADING_FOUND" = "false"
+          test -z "$NOT_UPGRADING_REPORT"
+          test "$RELEASED_FOUND" = "true"
