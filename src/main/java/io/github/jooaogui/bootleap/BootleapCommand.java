@@ -9,6 +9,7 @@ import io.github.jooaogui.bootleap.report.TextReport;
 import io.github.jooaogui.bootleap.rule.Finding;
 import io.github.jooaogui.bootleap.rule.GradleVersionRule;
 import io.github.jooaogui.bootleap.rule.Jackson3Rule;
+import io.github.jooaogui.bootleap.rule.MockBeanRule;
 import io.github.jooaogui.bootleap.rule.Rule;
 import io.github.jooaogui.bootleap.scan.ProjectScanner;
 import io.github.jooaogui.bootleap.scan.ScannedProject;
@@ -31,7 +32,8 @@ public class BootleapCommand implements Callable<Integer> {
 
     static final List<Rule> RULES = List.of(
             new GradleVersionRule(),
-            new Jackson3Rule());
+            new Jackson3Rule(),
+            new MockBeanRule());
 
     @Parameters(index = "0", defaultValue = ".", description = "Project directory (default: current directory).")
     Path projectDir;
