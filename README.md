@@ -3,6 +3,7 @@
 [![CI](https://github.com/JooaoGui/bootleap/actions/workflows/ci.yml/badge.svg)](https://github.com/JooaoGui/bootleap/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 ![Java 17+](https://img.shields.io/badge/java-17%2B-orange.svg)
+[![GitHub Marketplace](https://img.shields.io/badge/marketplace-bootleap-blue.svg?logo=github)](https://github.com/marketplace/actions/bootleap-spring-boot-4-upgrade-check)
 
 bootleap reads a Spring Boot 3 project (build files and sources) and lists everything that is likely to break on Spring Boot 4, all at once, with the file, the line and what to change. It does not run your build and does not touch your code.
 
@@ -88,7 +89,7 @@ Download `bootleap.jar` from the [latest release](https://github.com/JooaoGui/bo
 
 ### GitHub Action
 
-Add this workflow and bootleap comments on the pull request that moves your build to Spring Boot 4, for example the one Dependabot opens:
+Also on the [GitHub Marketplace](https://github.com/marketplace/actions/bootleap-spring-boot-4-upgrade-check). Add this workflow and bootleap comments on the pull request that moves your build to Spring Boot 4, for example the one Dependabot opens:
 
 ```yaml
 name: Spring Boot 4 check
