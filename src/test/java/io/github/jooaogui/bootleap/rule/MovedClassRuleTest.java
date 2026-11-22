@@ -56,6 +56,52 @@ class MovedClassRuleTest {
     }
 
     @Test
+    void flagsStaticImportsOfMovedClasses() throws IOException {
+        source("src/test/java/demo/ApiTest.java",
+                "package demo;",
+                "import static org.springframework.boot.test.web.client.TestRestTemplate.HttpClientOption.ENABLE_COOKIES;",
+                "import static org.springframework.boot.test.web.client.TestRestTemplate.*;");
+
+        assertThat(check()).extracting(Finding::fix).containsOnly(
+                "Import org.springframework.boot.resttestclient.TestRestTemplate instead. It lives in the "
+                        + "spring-boot-resttestclient module now, so add that dependency (or the matching starter) "
+                        + "if the build does not have it yet.");
+    }
+
+    @Test
+    void flagsWildcardImportsWhenTheFileUsesAMovedClass() throws IOException {
+        source("src/test/java/demo/OrderControllerTest.java",
+                "package demo;",
+                "import org.springframework.boot.test.autoconfigure.web.servlet.*;",
+                "",
+                "@WebMvcTest",
+                "@AutoConfigureMockMvc",
+                "class OrderControllerTest {}");
+
+        assertThat(check()).singleElement().satisfies(f -> {
+            assertThat(f.location()).endsWith(":2");
+            assertThat(f.problem()).isEqualTo("AutoConfigureMockMvc, WebMvcTest moved out of "
+                    + "org.springframework.boot.test.autoconfigure.web.servlet in Spring Boot 4, "
+                    + "so this wildcard import no longer finds them.");
+            assertThat(f.fix()).isEqualTo("Import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc, "
+                    + "org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest.");
+        });
+    }
+
+    @Test
+    void ignoresWildcardImportsWhenTheMovedClassesAreNotUsed() throws IOException {
+        // BackgroundPreinitializer moved out of this package, but nobody uses it directly.
+        source("src/main/java/demo/App.java",
+                "package demo;",
+                "import org.springframework.boot.autoconfigure.*;",
+                "",
+                "@SpringBootApplication",
+                "class App {}");
+
+        assertThat(check()).isEmpty();
+    }
+
+    @Test
     void tableMatchesTheOfficialMigrationGuide() {
         var moves = MovedClassRule.load("moved-classes-4.0.tsv");
 
