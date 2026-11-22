@@ -1,0 +1,17 @@
+name: E2E comment test
+
+# Temporary: checks that the published action comments on a pull request.
+on: pull_request
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bootleap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: JooaoGui/bootleap@v0.2.0
+        with:
+          path: .github/action-test/upgrading
