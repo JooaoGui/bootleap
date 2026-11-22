@@ -40,6 +40,7 @@ What it already checks:
 |---|---|
 | `gradle-version` | Gradle wrappers older than 8.14, which stop the build before anything compiles |
 | `jackson-3` | Jackson 2 imports (`com.fasterxml.jackson.*`, except annotations) and Spring Boot Jackson classes renamed in 4.0, like `Jackson2ObjectMapperBuilderCustomizer` |
+| `mock-bean` | `@MockBean`, `@SpyBean` and the rest of `org.springframework.boot.test.mock.mockito`, removed in 4.0 in favor of Spring Framework's `@MockitoBean` and `@MockitoSpyBean` |
 
 ## License
 
