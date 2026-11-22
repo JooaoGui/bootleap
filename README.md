@@ -39,6 +39,8 @@ What it already checks:
 | Rule | What it finds |
 |---|---|
 | `gradle-version` | Gradle wrappers older than 8.14, which stop the build before anything compiles |
+| `artifact` | Starters removed in 4.0 (`spring-boot-starter-aop`, `-undertow`, `-pulsar-reactive`), starters deprecated in favor of new names (`spring-boot-starter-web` → `spring-boot-starter-webmvc`, the `oauth2` ones, `web-services`) and `hibernate-jpamodelgen`, now `hibernate-processor` |
+| `migration-starter` | `flyway-core` or `liquibase-core` without their starter. This one does not break the build: the migrations just stop running at startup |
 | `jackson-3` | Jackson 2 imports (`com.fasterxml.jackson.*`, except annotations) and Spring Boot Jackson classes renamed in 4.0, like `Jackson2ObjectMapperBuilderCustomizer` |
 | `mock-bean` | `@MockBean`, `@SpyBean` and the rest of `org.springframework.boot.test.mock.mockito`, removed in 4.0 in favor of Spring Framework's `@MockitoBean` and `@MockitoSpyBean` |
 | `moved-class` | Imports of the ~770 Spring Boot classes that changed package in 4.x, like `@WebMvcTest`, `TestRestTemplate` and `@EntityScan`, with the new import and the module that now holds the class |
