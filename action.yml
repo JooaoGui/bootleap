@@ -80,7 +80,8 @@ runs:
         args=("$INPUT_PATH" --format markdown)
         if [ -n "$INPUT_TO" ]; then args+=(--to "$INPUT_TO"); fi
         if [ "$ONLY_IF_UPGRADING" = "true" ]; then args+=(--only-if-upgrading); fi
-        report="$RUNNER_TEMP/bootleap-report.md"
+        # One file per run, so using the action twice in a job keeps both reports.
+        report=$(mktemp "$RUNNER_TEMP/bootleap-report-XXXXXX.md")
         set +e
         java -jar "$JAR" "${args[@]}" > "$report"
         code=$?
