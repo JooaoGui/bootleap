@@ -1,0 +1,44 @@
+name: Release
+
+# Runs when a version tag like v0.1.0 is pushed. The jar is built here, from the tagged commit,
+# so anyone can check that the published file comes from this repository.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Check that the tag matches the version in pom.xml
+        run: |
+          version=$(./mvnw -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match pom.xml version $version"
+            exit 1
+          fi
+
+      - name: Build and test
+        run: ./mvnw -B verify
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd target
+          sha256sum bootleap.jar > bootleap.jar.sha256
+          gh release create "$GITHUB_REF_NAME" bootleap.jar bootleap.jar.sha256 \
+            --title "bootleap $GITHUB_REF_NAME" \
+            --notes-file "../.github/release-notes/$GITHUB_REF_NAME.md"
