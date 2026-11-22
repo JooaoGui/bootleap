@@ -41,6 +41,17 @@ What it already checks:
 | `gradle-version` | Gradle wrappers older than 8.14, which stop the build before anything compiles |
 | `jackson-3` | Jackson 2 imports (`com.fasterxml.jackson.*`, except annotations) and Spring Boot Jackson classes renamed in 4.0, like `Jackson2ObjectMapperBuilderCustomizer` |
 | `mock-bean` | `@MockBean`, `@SpyBean` and the rest of `org.springframework.boot.test.mock.mockito`, removed in 4.0 in favor of Spring Framework's `@MockitoBean` and `@MockitoSpyBean` |
+| `moved-class` | Imports of the ~770 Spring Boot classes that changed package in 4.x, like `@WebMvcTest`, `TestRestTemplate` and `@EntityScan`, with the new import and the module that now holds the class |
+
+Some classes moved more than once during 4.x (for example `spring-boot-amqp` became `spring-boot-rabbitmq`), so pass the version you are moving to with `--to 4.0`, `--to 4.1` or `--to 4.2` (the default).
+
+### Where the moved classes table comes from
+
+It is not written by hand. [`tools/MovedClasses.java`](tools/MovedClasses.java) reads the list of Spring Boot modules from the BOM of each version, downloads the jars from Maven Central and compares the public classes of 3.5.16 with those of each 4.x release. A class counts as moved when its old name is gone and exactly one class with the same simple name exists in the new version. To rebuild a table:
+
+```
+java tools/MovedClasses.java 3.5.16 4.2.0 > src/main/resources/io/github/jooaogui/bootleap/rule/moved-classes-4.2.tsv
+```
 
 ## License
 
