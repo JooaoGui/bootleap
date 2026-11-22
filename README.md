@@ -83,7 +83,7 @@ java -jar bootleap.jar [path] [--to VERSION] [--report-only]
 
 Exit codes: `0` nothing found, `1` something found, `2` bad input. So it can fail a CI step on its own.
 
-There is no release to download yet. Until then, [build it from source](#building-from-source).
+Download `bootleap.jar` from the [latest release](https://github.com/JooaoGui/bootleap/releases/latest). It needs Java 17 or later.
 
 ## Checks
 
@@ -124,7 +124,7 @@ Found a false positive, or something that broke on your upgrade and bootleap mis
 
 ## Roadmap
 
-- [ ] Downloadable release
+- [x] Downloadable release
 - [ ] GitHub Action that comments on the Dependabot PR that bumps Spring Boot to 4.x
 - [ ] Markdown and JSON output
 - [x] Read the target version from the build file, so `--to` is not needed
