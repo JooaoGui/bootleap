@@ -24,4 +24,15 @@ public final class TextFiles {
             throw new UncheckedIOException(e);
         }
     }
+
+    /** The 1-based line of a character offset inside a text. */
+    public static int lineAt(String text, int offset) {
+        int line = 1;
+        for (int i = 0; i < offset; i++) {
+            if (text.charAt(i) == '\n') {
+                line++;
+            }
+        }
+        return line;
+    }
 }

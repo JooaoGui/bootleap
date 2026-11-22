@@ -56,7 +56,7 @@ public record Dependency(Path file, int line, String group, String artifact) {
             Matcher artifact = MAVEN_ARTIFACT.matcher(body);
             if (group.find() && artifact.find()) {
                 int offset = block.start(2) + artifact.start();
-                dependencies.add(new Dependency(pom, lineOf(xml, offset), group.group(1), artifact.group(1)));
+                dependencies.add(new Dependency(pom, TextFiles.lineAt(xml, offset), group.group(1), artifact.group(1)));
             }
         }
         return dependencies;
@@ -78,15 +78,5 @@ public record Dependency(Path file, int line, String group, String artifact) {
             }
         }
         return dependencies;
-    }
-
-    private static int lineOf(String text, int offset) {
-        int line = 1;
-        for (int i = 0; i < offset; i++) {
-            if (text.charAt(i) == '\n') {
-                line++;
-            }
-        }
-        return line;
     }
 }
