@@ -8,9 +8,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.jooaogui.bootleap.report.TextReport;
+import io.github.jooaogui.bootleap.rule.ArtifactRule;
 import io.github.jooaogui.bootleap.rule.Finding;
 import io.github.jooaogui.bootleap.rule.GradleVersionRule;
 import io.github.jooaogui.bootleap.rule.Jackson3Rule;
+import io.github.jooaogui.bootleap.rule.MigrationStarterRule;
 import io.github.jooaogui.bootleap.rule.MockBeanRule;
 import io.github.jooaogui.bootleap.rule.MovedClassRule;
 import io.github.jooaogui.bootleap.rule.Rule;
@@ -48,6 +50,8 @@ public class BootleapCommand implements Callable<Integer> {
     static List<Rule> rules(String target) {
         return List.of(
                 new GradleVersionRule(),
+                new ArtifactRule(),
+                new MigrationStarterRule(),
                 new Jackson3Rule(),
                 new MockBeanRule(),
                 new MovedClassRule(target));
