@@ -8,6 +8,8 @@ bootleap reads a Spring Boot 3 project (build files and sources) and lists every
 
 ```
 $ java -jar bootleap.jar my-service
+The build is on Spring Boot 3.5.16 in build.gradle:2, checking against Spring Boot 4.2. Use --to to pick another 4.x version.
+
 7 thing(s) to fix before Spring Boot 4:
 
 [gradle-version] gradle/wrapper/gradle-wrapper.properties:3
@@ -76,7 +78,7 @@ java -jar bootleap.jar [path] [--to VERSION] [--report-only]
 | Option | What it does |
 |---|---|
 | `path` | Project directory. Default: the current directory. Multi-module builds are scanned as a whole. |
-| `--to VERSION` | Spring Boot version you are moving to: `4.0`, `4.1` or `4.2` (default). Some classes moved again during 4.x, so the advice depends on it. |
+| `--to VERSION` | Spring Boot version you are moving to: `4.0`, `4.1` or `4.2`. Some classes moved again during 4.x, so the advice depends on it. Without it, bootleap reads the version from your build (Maven parent or BOM, Gradle plugin, `gradle.properties` or version catalog): on a Dependabot branch that is already the new 4.x version. If the build is still on 3.x, it checks against the newest one. |
 | `--report-only` | Always exit with 0, even when something is found. |
 
 Exit codes: `0` nothing found, `1` something found, `2` bad input. So it can fail a CI step on its own.
@@ -125,7 +127,7 @@ Found a false positive, or something that broke on your upgrade and bootleap mis
 - [ ] Downloadable release
 - [ ] GitHub Action that comments on the Dependabot PR that bumps Spring Boot to 4.x
 - [ ] Markdown and JSON output
-- [ ] Read the target version from the build file, so `--to` is not needed
+- [x] Read the target version from the build file, so `--to` is not needed
 
 ## Author
 
