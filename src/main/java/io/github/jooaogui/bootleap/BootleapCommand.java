@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.github.jooaogui.bootleap.report.JsonReport;
 import io.github.jooaogui.bootleap.report.MarkdownReport;
 import io.github.jooaogui.bootleap.report.Report;
 import io.github.jooaogui.bootleap.report.TextReport;
@@ -56,7 +57,8 @@ public class BootleapCommand implements Callable<Integer> {
     /** Output formats. The names are what users type after --format. */
     enum Format {
         text(new TextReport()),
-        markdown(new MarkdownReport());
+        markdown(new MarkdownReport()),
+        json(new JsonReport());
 
         final Report report;
 
@@ -67,7 +69,7 @@ public class BootleapCommand implements Callable<Integer> {
 
     @Option(names = "--format", paramLabel = "FORMAT", defaultValue = "text",
             description = "Output format: ${COMPLETION-CANDIDATES} (default: ${DEFAULT-VALUE}). "
-                    + "Markdown is made for pull request comments.")
+                    + "Markdown is made for pull request comments, JSON for scripts.")
     Format format;
 
     @Option(names = "--only-if-upgrading",

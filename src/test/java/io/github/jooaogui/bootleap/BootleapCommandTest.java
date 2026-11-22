@@ -56,6 +56,7 @@ class BootleapCommandTest {
 
         assertThat(run(dir.toString(), "--format", "markdown")).isEqualTo(1);
         assertThat(run(dir.toString(), "--format", "text")).isEqualTo(1);
+        assertThat(run(dir.toString(), "--format", "json")).isEqualTo(1);
         assertThat(run(dir.toString(), "--format", "html")).isEqualTo(2);
     }
 
