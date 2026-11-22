@@ -44,7 +44,7 @@ The build is on Spring Boot 3.5.16 in build.gradle:2, checking against Spring Bo
 ## Table of contents
 
 - [Why](#why)
-- [How to use](#how-to-use)
+- [How to use](#how-to-use) ([GitHub Action](#github-action))
 - [Checks](#checks)
 - [Where the data comes from](#where-the-data-comes-from)
 - [Building from source](#building-from-source)
@@ -86,6 +86,38 @@ Exit codes: `0` nothing found, `1` something found, `2` bad input. So it can fai
 
 Download `bootleap.jar` from the [latest release](https://github.com/JooaoGui/bootleap/releases/latest). It needs Java 17 or later.
 
+### GitHub Action
+
+Add this workflow and bootleap comments on the pull request that moves your build to Spring Boot 4, for example the one Dependabot opens:
+
+```yaml
+name: Spring Boot 4 check
+on: pull_request
+
+permissions:
+  contents: read
+  pull-requests: write # to comment
+
+jobs:
+  bootleap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: JooaoGui/bootleap@v0.2.0
+```
+
+It stays quiet on pull requests that do not ask for Spring Boot 4, keeps a single comment that it updates on every push, and always writes the report to the job summary. The runner needs Java 17 or later (`ubuntu-latest` has it).
+
+| Input | Default | What it does |
+|---|---|---|
+| `path` | `.` | Project directory. |
+| `to` | | Spring Boot version to check against. Default: the 4.x version in the build. |
+| `only-if-upgrading` | `true` | Only check when the build asks for Spring Boot 4. Set to `false` to check any pull request. |
+| `comment` | `true` | Comment on the pull request. |
+| `fail-on-findings` | `false` | Fail the step when something is found. |
+
+Outputs: `found` (`true` or `false`) and `report` (path to the Markdown report).
+
 ## Checks
 
 | ID | What it finds | Breaks the build? |
@@ -126,7 +158,7 @@ Found a false positive, or something that broke on your upgrade and bootleap mis
 ## Roadmap
 
 - [x] Downloadable release
-- [ ] GitHub Action that comments on the Dependabot PR that bumps Spring Boot to 4.x
+- [x] GitHub Action that comments on the Dependabot PR that bumps Spring Boot to 4.x
 - [x] Markdown output
 - [ ] JSON output
 - [x] Read the target version from the build file, so `--to` is not needed
