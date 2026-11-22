@@ -80,12 +80,10 @@ public class BootleapCommand implements Callable<Integer> {
         } else {
             choice = choose(project, BootVersion.detect(project));
         }
-        System.out.println(choice.message());
-        System.out.println();
         List<Finding> findings = rules(choice.version()).stream()
                 .flatMap(rule -> rule.check(project).stream())
                 .toList();
-        new TextReport().print(findings, System.out);
+        new TextReport().print(choice.message(), findings, System.out);
         return findings.isEmpty() || reportOnly ? 0 : 1;
     }
 

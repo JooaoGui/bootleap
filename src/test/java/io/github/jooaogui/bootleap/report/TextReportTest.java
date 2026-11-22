@@ -16,7 +16,7 @@ class TextReportTest {
 
     @Test
     void saysWhenNothingWasFound() {
-        assertThat(print(List.of())).isEqualTo("No known Spring Boot 4 problems found.\n");
+        assertThat(print(List.of())).isEqualTo("Checking against Spring Boot 4.2.\n\nNo known Spring Boot 4 problems found.\n");
     }
 
     @Test
@@ -25,6 +25,8 @@ class TextReportTest {
                 new Finding("demo", Path.of("A.java"), 3, "Problem A.", "Fix A.")));
 
         assertThat(report).isEqualTo(String.join("\n",
+                "Checking against Spring Boot 4.2.",
+                "",
                 "1 thing(s) to fix before Spring Boot 4:",
                 "",
                 "[demo] A.java:3",
@@ -50,7 +52,7 @@ class TextReportTest {
     private static String print(List<Finding> findings) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         PrintStream out = new PrintStream(bytes, true, StandardCharsets.UTF_8);
-        new TextReport().print(findings, out);
+        new TextReport().print("Checking against Spring Boot 4.2.", findings, out);
         return bytes.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
     }
 }

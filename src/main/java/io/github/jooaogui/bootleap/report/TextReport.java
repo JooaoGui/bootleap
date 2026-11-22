@@ -8,9 +8,12 @@ import io.github.jooaogui.bootleap.rule.Finding;
 /**
  * Plain text report for the terminal.
  */
-public final class TextReport {
+public final class TextReport implements Report {
 
-    public void print(List<Finding> findings, PrintStream out) {
+    @Override
+    public void print(String context, List<Finding> findings, PrintStream out) {
+        out.println(context);
+        out.println();
         if (findings.isEmpty()) {
             out.println("No known Spring Boot 4 problems found.");
             return;
