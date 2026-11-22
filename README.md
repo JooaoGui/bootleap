@@ -104,7 +104,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: JooaoGui/bootleap@v0.2.0
+      - uses: JooaoGui/bootleap@v0.3.0
 ```
 
 It stays quiet on pull requests that do not ask for Spring Boot 4, keeps a single comment that it updates on every push, and always writes the report to the job summary. The runner needs Java 17 or later (`ubuntu-latest` has it).
